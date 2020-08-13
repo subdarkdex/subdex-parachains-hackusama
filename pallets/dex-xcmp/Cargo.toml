@@ -26,7 +26,7 @@ rev = '96da14c14fb785e106bb89a18c9dedaf2f789d2c'
 default-features = false
 features = ['derive']
 package = 'parity-scale-codec'
-version = '1.3.1'
+version = '1.3.0'
 
 [dependencies.frame-support]
 default-features = false
@@ -54,11 +54,15 @@ features = ['derive']
 optional = true
 version = '1.0.101'
 
+
 [features]
 default = ['std']
 std = [
-    'serde',
-    'codec/std',
-    'frame-support/std',
-    'frame-system/std',
+    "serde",
+    "codec/std",
+    "cumulus-upward-message/std",
+    "cumulus-primitives/std",
+    "frame-support/std",
+    "frame-system/std",
+    "polkadot-parachain/std",
 ]
