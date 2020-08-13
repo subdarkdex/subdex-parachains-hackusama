@@ -2,8 +2,7 @@
 
 use cumulus_primitives::ParaId;
 use parachain_runtime::{
-	AccountId, BalancesConfig, GenesisConfig, Signature, SudoConfig, SystemConfig,
-	ParachainInfoConfig, WASM_BINARY,
+	AccountId, GenesisConfig, GenericAssetConfig, DexPalletConfig, DexXCMPConfig, Signature, SudoConfig, SystemConfig, WASM_BINARY, KSMAssetId
 };
 use sc_chain_spec::{ChainSpecExtension, ChainSpecGroup};
 use sc_service::ChainType;
@@ -114,7 +113,7 @@ fn testnet_genesis(
 ) -> GenesisConfig {
 	GenesisConfig {
 		frame_system: Some(SystemConfig {
-			code: WASM_BINARY.expect("WASM binary was not build, please build it!").to_vec(),
+			code: WASM_BINARY.to_vec(),
 			changes_trie_config: Default::default(),
 		}),
 		pallet_sudo: Some(SudoConfig {
