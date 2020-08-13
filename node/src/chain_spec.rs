@@ -50,7 +50,7 @@ where
 
 pub fn get_chain_spec(id: ParaId) -> ChainSpec {
 	ChainSpec::from_genesis(
-		"Local Testnet",
+		"Generic Parachain Testnet",
 		"local_testnet",
 		ChainType::Local,
 		move || {
