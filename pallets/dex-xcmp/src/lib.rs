@@ -95,7 +95,7 @@ decl_module! {
             let sender = ensure_signed(origin)?;
 
             <generic_asset::Module<T>>::burn_free(
-                &<generic_asset::Module<T>>::spending_asset_id(), &Self::dex_account_id(), &dest, &amount
+                &<generic_asset::Module<T>>::spending_asset_id(), &Self::dex_account_id(), &sender, &amount
             )?;
 
 
@@ -122,7 +122,7 @@ decl_module! {
             let asset_id = Self::ensure_parachain_currency_exists(&para_id)?;
 
             <generic_asset::Module<T>>::burn_free(
-                &asset_id, &Self::dex_account_id(), &dest, &amount
+                &asset_id, &Self::dex_account_id(), &who, &amount
             )?;
 
             T::XCMPMessageSender::send_xcmp_message(
@@ -150,16 +150,8 @@ impl<T: Trait> Module<T> {
         Ok(Self::currency_by_para_id(para_id))
     }
 
-    fn create_default_dex_asset_options(
-        asset_id: Option<AssetIdOf<T>>,
-    ) -> AssetOptions<BalanceOf<T>, T::AccountId> {
+    fn create_default_dex_asset_options() -> AssetOptions<BalanceOf<T>, T::AccountId> {
         let owner = Owner::Address(Self::dex_account_id());
-
-        let asset_id = if let Some(asset_id) = asset_id {
-            asset_id
-        } else {
-            <generic_asset::Module<T>>::next_asset_id()
-        };
 
         let permissions = PermissionsV1 {
             update: owner.clone(),
@@ -191,7 +183,7 @@ impl<T: Trait> DownwardMessageHandler for Module<T> {
 
                 if !<CurrencyByParaId<T>>::contains_key(ParaId::default()) {
                     let dex_asset_options =
-                        Self::create_default_dex_asset_options(Some(relay_chain_currency_id));
+                        Self::create_default_dex_asset_options();
 
                     <generic_asset::Module<T>>::create_asset(
                         Some(relay_chain_currency_id),
@@ -227,7 +219,7 @@ impl<T: Trait> XCMPMessageHandler<XCMPMessage<T::AccountId, BalanceOf<T>>> for M
                 if !<CurrencyByParaId<T>>::contains_key(&src) {
                     let asset_id = <generic_asset::Module<T>>::next_asset_id();
 
-                    let dex_asset_options = Self::create_default_dex_asset_options(None);
+                    let dex_asset_options = Self::create_default_dex_asset_options();
 
                     <generic_asset::Module<T>>::create_asset(
                         None,
