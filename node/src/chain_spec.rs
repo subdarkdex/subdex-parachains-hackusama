@@ -114,17 +114,25 @@ fn testnet_genesis(
 ) -> GenesisConfig {
 	GenesisConfig {
 		frame_system: Some(SystemConfig {
-			code: WASM_BINARY.to_vec(),
+			code: WASM_BINARY.expect("WASM binary was not build, please build it!").to_vec(),
 			changes_trie_config: Default::default(),
 		}),
-		pallet_balances: Some(BalancesConfig {
-			balances: endowed_accounts
-				.iter()
-				.cloned()
-				.map(|k| (k, 1 << 60))
-				.collect(),
+		pallet_sudo: Some(SudoConfig {
+			key: root_key.clone(),
 		}),
-		pallet_sudo: Some(SudoConfig { key: root_key }),
-		parachain_info: Some(ParachainInfoConfig { parachain_id: id }),
+		dex_xcmp: Some(DexXCMPConfig {
+			dex_account_id: root_key.clone(),
+		}),
+		dex_pallet: Some(DexPalletConfig {
+			dex_account_id: root_key,
+		}),
+		generic_asset: Some(GenericAssetConfig {
+			assets: vec![],
+			initial_balance: 0,
+			endowed_accounts: endowed_accounts,
+			next_asset_id: KSMAssetId::get() + 1,
+			spending_asset_id: KSMAssetId::get(),
+			staking_asset_id: KSMAssetId::get(),
+		}),
 	}
 }

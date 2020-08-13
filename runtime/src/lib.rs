@@ -1,4 +1,19 @@
-// Copyright 2020 Parity Technologies (UK) Ltd.
+// Copyright 2019 Parity Technologies (UK) Ltd.
+// This file is part of Cumulus.
+
+// Cumulus is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+
+// Cumulus is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with Cumulus.  If not, see <http://www.gnu.org/licenses/>.
+
 #![cfg_attr(not(feature = "std"), no_std)]
 // `construct_runtime!` does a lot of recursion and requires us to increase the limit to 256.
 #![recursion_limit = "256"]
@@ -7,6 +22,8 @@
 #[cfg(feature = "std")]
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
+use dex_pallet;
+use dex_xcmp::XCMPMessage;
 use sp_api::impl_runtime_apis;
 use sp_core::OpaqueMetadata;
 use sp_runtime::{
@@ -21,23 +38,20 @@ use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
 
 // A few exports that help ease life for downstream crates.
+
 pub use frame_support::{
 	construct_runtime, parameter_types,
-	traits::Randomness,
+	traits::{Get, KeyOwnerProofSystem, Randomness},
 	weights::{constants::WEIGHT_PER_SECOND, IdentityFee, Weight},
 	StorageValue,
 };
-pub use pallet_balances::Call as BalancesCall;
+
+pub use dex_pallet::Call as DexPalletCall;
+pub use generic_asset::Call as GenericAssetCall;
 pub use pallet_timestamp::Call as TimestampCall;
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
 pub use sp_runtime::{Perbill, Permill};
-
-/// Import the template pallet.
-pub use template;
-
-/// Import the message pallet.
-pub use cumulus_token_dealer;
 
 /// An index to a block.
 pub type BlockNumber = u32;
@@ -55,6 +69,9 @@ pub type AccountIndex = u32;
 
 /// Balance of an account.
 pub type Balance = u128;
+
+/// Asset id for custom assets
+pub type AssetId = u64;
 
 /// Index of a transaction in the chain.
 pub type Index = u32;
@@ -90,16 +107,16 @@ pub mod opaque {
 
 /// This runtime version.
 pub const VERSION: RuntimeVersion = RuntimeVersion {
-	spec_name: create_runtime_str!("parachain-template"),
-	impl_name: create_runtime_str!("parachain-template"),
-	authoring_version: 1,
-	spec_version: 1,
-	impl_version: 1,
+	spec_name: create_runtime_str!("wasm-test-parachain"),
+	impl_name: create_runtime_str!("wasm-test-parachain"),
+	authoring_version: 3,
+	spec_version: 4,
+	impl_version: 4,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
 };
 
-pub const MILLISECS_PER_BLOCK: u64 = 6000;
+pub const MILLISECS_PER_BLOCK: u64 = 3000;
 
 pub const SLOT_DURATION: u64 = MILLISECS_PER_BLOCK;
 
@@ -167,7 +184,7 @@ impl frame_system::Trait for Runtime {
 	type Version = Version;
 	/// Converts a module to an index of this module in the runtime.
 	type ModuleToIndex = ModuleToIndex;
-	type AccountData = pallet_balances::AccountData<Balance>;
+	type AccountData = ();
 	type OnNewAccount = ();
 	type OnKilledAccount = ();
 	type DbWeight = ();
@@ -197,19 +214,8 @@ parameter_types! {
 	pub const TransactionByteFee: u128 = 1;
 }
 
-impl pallet_balances::Trait for Runtime {
-	/// The type for recording an account's balance.
-	type Balance = Balance;
-	/// The ubiquitous event type.
-	type Event = Event;
-	type DustRemoval = ();
-	type ExistentialDeposit = ExistentialDeposit;
-	type AccountStore = System;
-	type WeightInfo = ();
-}
-
 impl pallet_transaction_payment::Trait for Runtime {
-	type Currency = Balances;
+	type Currency = generic_asset::SpendingAssetCurrency<Runtime>;
 	type OnTransactionPayment = ();
 	type TransactionByteFee = TransactionByteFee;
 	type WeightToFee = IdentityFee<Balance>;
@@ -226,28 +232,48 @@ impl cumulus_parachain_upgrade::Trait for Runtime {
 	type OnValidationFunctionParams = ();
 }
 
-impl cumulus_message_broker::Trait for Runtime {
-	type Event = Event;
-	type DownwardMessageHandlers = TokenDealer;
-	type UpwardMessage = cumulus_upward_message::RococoUpwardMessage;
-	type ParachainId = ParachainInfo;
-	type XCMPMessage = cumulus_token_dealer::XCMPMessage<AccountId, Balance>;
-	type XCMPMessageHandlers = TokenDealer;
+parameter_types! {
+	pub storage ParachainId: cumulus_primitives::ParaId = 200.into();
 }
 
-impl parachain_info::Trait for Runtime {}
+impl cumulus_message_broker::Trait for Runtime {
+	type Event = Event;
+	type DownwardMessageHandlers = DexXCMP;
+	type UpwardMessage = cumulus_upward_message::WestendUpwardMessage;
+	type ParachainId = ParachainId;
+	type XCMPMessage = XCMPMessage<AccountId, Balance>;
+	type XCMPMessageHandlers = DexXCMP;
+}
 
-impl cumulus_token_dealer::Trait for Runtime {
+impl dex_xcmp::Trait for Runtime {
 	type Event = Event;
 	type UpwardMessageSender = MessageBroker;
-	type UpwardMessage = cumulus_upward_message::RococoUpwardMessage;
-	type Currency = Balances;
+	type UpwardMessage = cumulus_upward_message::WestendUpwardMessage;
+	// type Currency = generic_asset::SpendingAssetCurrency<Runtime>;
 	type XCMPMessageSender = MessageBroker;
 }
 
-/// Configure the pallet template in pallets/template.
-impl template::Trait for Runtime {
+impl generic_asset::Trait for Runtime {
 	type Event = Event;
+	type Balance = Balance;
+	type AssetId = AssetId;
+}
+
+parameter_types! {
+	// Main currency id
+	pub const KSMAssetId: AssetId = 1;
+	pub const InitialShares: Balance = 1000;
+
+	// 3/1000
+	pub const ExchangeFeeRateNominator: Balance = 3;
+	pub const ExchangeFeeRateDenominator: Balance = 1000;
+}
+
+impl dex_pallet::Trait for Runtime {
+	type Event = Event;
+	type InitialShares = InitialShares;
+	type ExchangeFeeRateNominator = ExchangeFeeRateNominator;
+	type ExchangeFeeRateDenominator = ExchangeFeeRateDenominator;
 }
 
 construct_runtime! {
@@ -258,15 +284,14 @@ construct_runtime! {
 	{
 		System: frame_system::{Module, Call, Storage, Config, Event<T>},
 		Timestamp: pallet_timestamp::{Module, Call, Storage, Inherent},
-		Balances: pallet_balances::{Module, Call, Storage, Config<T>, Event<T>},
 		Sudo: pallet_sudo::{Module, Call, Storage, Config<T>, Event<T>},
 		RandomnessCollectiveFlip: pallet_randomness_collective_flip::{Module, Call, Storage},
 		ParachainUpgrade: cumulus_parachain_upgrade::{Module, Call, Storage, Inherent, Event},
 		MessageBroker: cumulus_message_broker::{Module, Call, Inherent, Event<T>},
+		DexXCMP: dex_xcmp::{Module, Call, Event<T>, Config<T>},
 		TransactionPayment: pallet_transaction_payment::{Module, Storage},
-		ParachainInfo: parachain_info::{Module, Storage, Config},
-		TokenDealer: cumulus_token_dealer::{Module, Call, Event<T>},
-		TemplateModule: template::{Module, Call, Storage, Event<T>},
+		GenericAsset: generic_asset::{Module, Call, Config<T>, Storage, Event<T>},
+		DexPallet: dex_pallet::{Module, Config<T>, Call, Storage, Event<T>},
 	}
 }
 
