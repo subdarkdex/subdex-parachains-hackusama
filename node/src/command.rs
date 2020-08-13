@@ -52,10 +52,10 @@ impl SubstrateCli for Cli {
 	fn load_spec(&self, id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, String> {
 		match id {
 			"staging" => Ok(Box::new(chain_spec::staging_test_net(
-				self.run.parachain_id.unwrap_or(200).into(),
+				self.run.parachain_id.unwrap_or(100).into(),
 			))),
 			"" => Ok(Box::new(chain_spec::get_chain_spec(
-				self.run.parachain_id.unwrap_or(200).into(),
+				self.run.parachain_id.unwrap_or(100).into(),
 			))),
 			path => Ok(Box::new(chain_spec::ChainSpec::from_json_file(
 				path.into(),
@@ -211,7 +211,7 @@ pub fn run() -> Result<()> {
 						.chain(cli.relaychain_args.iter()),
 				);
 
-				let id = ParaId::from(cli.run.parachain_id.or(para_id).unwrap_or(200));
+				let id = ParaId::from(cli.run.parachain_id.or(para_id).unwrap_or(100));
 
 				let parachain_account =
 					AccountIdConversion::<polkadot_primitives::v0::AccountId>::into_account(&id);

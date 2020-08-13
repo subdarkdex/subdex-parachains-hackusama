@@ -19,7 +19,7 @@ impl <T: Trait> Get<ParaId> for Module<T> {
 
 decl_storage! {
 	trait Store for Module<T: Trait> as ParachainUpgrade {
-		ParachainId get(fn parachain_id) config(): ParaId = 200.into();
+		ParachainId get(fn parachain_id) config(): ParaId = 100.into();
 	}
 }
 
