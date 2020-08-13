@@ -19,8 +19,8 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 use frame_support::{
-	decl_error, decl_event, decl_module, decl_storage, ensure,
-	traits::{Currency, ExistenceRequirement, Get, WithdrawReason},
+	decl_error, decl_event, decl_module, 
+	decl_storage, ensure, dispatch::DispatchResult, traits::{Currency, ExistenceRequirement, Get, WithdrawReason},
 };
 use frame_system::ensure_signed;
 
@@ -33,7 +33,6 @@ use cumulus_primitives::{
 use cumulus_upward_message::BalancesMessage;
 use generic_asset::{AssetOptions, Owner, PermissionsV1};
 use polkadot_parachain::primitives::AccountIdConversion;
-use sp_runtime::DispatchResult;
 
 #[derive(Encode, Decode)]
 pub enum XCMPMessage<XAccountId, XBalance> {

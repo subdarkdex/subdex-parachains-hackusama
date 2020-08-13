@@ -12,11 +12,6 @@ version = '2.0.0-rc5'
 [package.metadata.docs.rs]
 targets = ['x86_64-unknown-linux-gnu']
 
-[dependencies.cumulus-message-broker]
-git = "https://github.com/paritytech/cumulus"
-default-features = false
-rev = '96da14c14fb785e106bb89a18c9dedaf2f789d2c'
-
 [dependencies.cumulus-upward-message]
 git = "https://github.com/paritytech/cumulus"
 default-features = false
@@ -43,21 +38,6 @@ default-features = false
 git = 'https://github.com/paritytech/substrate.git'
 branch = "rococo-branch"
 
-[dependencies.sp-core]
-default-features = false
-git = 'https://github.com/paritytech/substrate.git'
-branch = "rococo-branch"
-
-[dependencies.sp-runtime]
-default-features = false
-git = 'https://github.com/paritytech/substrate.git'
-branch = "rococo-branch"
-
-[dependencies.sp-std]
-git = 'https://github.com/paritytech/substrate.git'
-default-features = false
-branch = "rococo-branch"
-
 [dependencies.generic-asset]
 git = 'https://github.com/paritytech/substrate.git'
 package = "pallet-generic-asset"
@@ -81,6 +61,4 @@ std = [
     'codec/std',
     'frame-support/std',
     'frame-system/std',
-    'sp-std/std',
-    'sp-runtime/std',
 ]

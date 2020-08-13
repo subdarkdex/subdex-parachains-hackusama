@@ -1189,7 +1189,6 @@ dependencies = [
 name = "dex-xcmp"
 version = "2.0.0-rc5"
 dependencies = [
- "cumulus-message-broker",
  "cumulus-primitives",
  "cumulus-upward-message",
  "frame-support",
@@ -1198,9 +1197,6 @@ dependencies = [
  "parity-scale-codec",
  "polkadot-parachain",
  "serde",
- "sp-core",
- "sp-runtime",
- "sp-std",
 ]
 
 [[package]]
