@@ -6,7 +6,7 @@ build = 'build.rs'
 edition = '2018'
 
 [[bin]]
-name = 'parachain-collator'
+name = 'generic-parachain-collator'
 path = 'src/main.rs'
 
 [dependencies]
