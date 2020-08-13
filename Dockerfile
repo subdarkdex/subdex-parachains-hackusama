@@ -5,7 +5,7 @@ RUN rustup toolchain install nightly
 RUN rustup target add wasm32-unknown-unknown --toolchain nightly
 RUN command -v wasm-gc || cargo +nightly install --git https://github.com/alexcrichton/wasm-gc --force
 
-WORKDIR /generic_parachain
+WORKDIR /generic_chain
 
 # Ideally, we could just do something like `COPY . .`, but that doesn't work:
 # it busts the cache every time non-source files like inject_bootnodes.sh change,
