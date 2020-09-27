@@ -1,4 +1,7 @@
-# Substrate Cumulus Parachain Template
+# DEPRECATED repo for hackusama parachains
+
+____
+## Substrate Cumulus Parachain Template
 
 A new Cumulus-based Substrate node, ready for hacking :rocket:
 
